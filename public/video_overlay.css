@@ -1,0 +1,9 @@
+#drawingCanvas {
+    float: right;
+}
+
+#selection {
+    float: left;
+    width: 100px;
+    height: 100%;
+}
