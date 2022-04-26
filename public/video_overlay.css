@@ -1,9 +1,21 @@
-#drawingCanvas {
-    float: right;
+#selectionCanvas {
+    position: absolute;
+    left: 10px;
 }
 
-#selection {
-    float: left;
+#otherCanvas,
+#drawingCanvas {
+    position: absolute;
+    right: 10px;
+}
+
+#buttons {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
     width: 100px;
-    height: 100%;
+}
+
+#buttons .button {
+    margin: 10px;
 }
