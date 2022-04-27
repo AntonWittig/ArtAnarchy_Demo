@@ -14,13 +14,26 @@
   "author": "Emily Rose <amorelandra@twitch.tv>",
   "license": "Apache-2.0",
   "dependencies": {
+    "body-parser": "^1.20.0",
     "boom": "^7.2.0",
     "color": "^3.0.0",
     "commander": "^2.15.0",
+    "express": "^4.18.0",
     "hapi": "^17.8.4",
     "inert": "^5.1.0",
-    "jsonwebtoken": "^8.2.0",
+    "jsonwebtoken": "^8.5.1",
     "request": "^2.85.0",
     "selfsigned": "^1.10.2"
-  }
+  },
+  "bin": {
+    "extension-hello-world": "bin/generate_cert.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AntonWittig/ArtAnarchy_Demo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AntonWittig/ArtAnarchy_Demo/issues"
+  },
+  "homepage": "https://github.com/AntonWittig/ArtAnarchy_Demo#readme"
 }

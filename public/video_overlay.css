@@ -1,17 +1,19 @@
 #selectionCanvas {
     position: absolute;
     left: 10px;
+    top: 10%;
 }
 
 #otherCanvas,
 #drawingCanvas {
     position: absolute;
     right: 10px;
+    top: 10%;
 }
 
 #buttons {
     position: absolute;
-    bottom: 10px;
+    bottom: 10%;
     left: 10px;
     width: 100px;
 }
