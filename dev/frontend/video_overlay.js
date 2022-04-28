@@ -1,60 +1,3 @@
-const drawTypes = {
-    Line: "line",
-    Pencil: "pencil",
-};
-var drawType = drawTypes.Line;
-var drawColor = "#000000";
-var drawSize = 1;
-var isDrawing = false;
-
-var mouseDownPos = { x: 0, y: 0 };
-
-function getCursorPosition(canvas, event) {
-    var x;
-    var y;
-
-    if (event.pageX != undefined && event.pageY != undefined) {
-        x = event.pageX;
-        y = event.pageY;
-    } else {
-        x =
-            event.clientX +
-            document.body.scrollLeft +
-            document.documentElement.scrollLeft;
-        y =
-            event.clientY +
-            document.body.scrollTop +
-            document.documentElement.scrollTop;
-    }
-
-    return { x: x, y: y };
-}
-
-var oImgData;
-var oCanvas = document.getElementById("otherCanvas");
-
-var dImgData;
-var dCanvas = document.getElementById("drawingCanvas");
-dCanvas.addEventListener("mousedown", beginDraw, false);
-dCanvas.addEventListener("mousemove", draw, false);
-dCanvas.addEventListener("mouseup", endDraw, false);
-var paths = [];
-
-var sCanvasWidth = 100;
-var sImgData;
-var sCanvas = document.getElementById("selectionCanvas");
-sCanvas.addEventListener("click", select, false);
-
-function updateImgData(canvas, context, type = "draw") {
-    if (type === "draw") {
-        dImgData = context.getImageData(0, 0, canvas.width, canvas.height);
-    } else if (type === "selection") {
-        sImgData = context.getImageData(0, 0, canvas.width, canvas.height);
-    } else if (type === "other") {
-        oImgData = context.getImageData(0, 0, canvas.width, canvas.height);
-    }
-}
-
 const selectMappingColors = {
     red: { color: "#ff0000", x: 0, y: 0 },
     green: { color: "#00ff00", x: 1, y: 0 },
@@ -76,19 +19,91 @@ const selectMappingSize = {
     medium: { x: 1, y: 6, size: 2 },
     large: { x: 2, y: 6, size: 3 },
 };
+const drawTypes = {
+    Line: "line",
+    Pencil: "pencil",
+};
+const twitch = window.Twitch.ext;
+const backend_subdomain = "1a40-2a02-810b-4340-74a0-55f5-2627-2645-fa2b";
+var token, userId;
+
+var drawType = drawTypes.Line;
+var drawColor = "#000000";
+var drawSize = 1;
+var isDrawing = false;
+
+var mouseDownPos = { x: 0, y: 0 };
+var lastMousePos = { x: 0, y: 0 };
+
+var oImgData;
+var oCanvas = document.getElementById("otherCanvas");
+
+var dImgData;
+var dCanvas = document.getElementById("drawingCanvas");
+
+var paths = [];
+
+var sCanvasWidth = 100;
+var sImgData;
+var sCanvas = document.getElementById("selectionCanvas");
+
+var clearButton = document.getElementById("clearButton");
+var showOthersButton = document.getElementById("showOthersButton");
+var hideOthersButton = document.getElementById("hideOthersButton");
+var submitButton = document.getElementById("submitButton");
+
+dCanvas.addEventListener("mousedown", beginDraw, false);
+dCanvas.addEventListener("mousemove", draw, false);
+dCanvas.addEventListener("mouseup", endDraw, false);
+sCanvas.addEventListener("click", select, false);
+
+function getCursorPosition(canvas, event) {
+    var x;
+    var y;
+
+    if (event.pageX != undefined && event.pageY != undefined) {
+        x = event.pageX;
+        y = event.pageY;
+    } else {
+        x =
+            event.clientX +
+            document.body.scrollLeft +
+            document.documentElement.scrollLeft;
+        y =
+            event.clientY +
+            document.body.scrollTop +
+            document.documentElement.scrollTop;
+    }
+
+    return { x: x - canvas.offsetLeft, y: y - canvas.offsetTop };
+}
+
+function updateImgData(canvas, context, type = "draw") {
+    if (type === "draw") {
+        dImgData = context.getImageData(0, 0, canvas.width, canvas.height);
+    } else if (type === "selection") {
+        sImgData = context.getImageData(0, 0, canvas.width, canvas.height);
+    } else if (type === "other") {
+        oImgData = context.getImageData(0, 0, canvas.width, canvas.height);
+    }
+}
 
 function initSCanvas() {
     sCanvas.width = sCanvasWidth;
-    sCanvas.height = Math.max(window.innerHeight - 20, 1);
+    sCanvas.height = Math.max(window.innerHeight - 160 - 2, 1);
     context = sCanvas.getContext("2d");
     context.strokeStyle = "#000000";
 
     for (key in selectMappingColors) {
         dict = selectMappingColors[key];
+        console.log(dict);
         context.fillStyle = dict["color"];
+        console.log(context.fillStyle);
         x = dict["x"];
+        console.log(x);
         y = dict["y"];
-        colorRect = new Path2D();
+        console.log(y);
+        let colorRect = new Path2D();
         colorRect.rect(
             (x * 100) / 3 + 1,
             (y * 100) / 3 + 1,
@@ -105,11 +120,11 @@ function initSCanvas() {
         context.fillStyle = "#000000";
         x = dict["x"];
         y = dict["y"];
-        toolRect = new Path2D();
-        toolRect.rect(x * 100 + 1, (y * 100) / 3 + 1, 100 - 2, 100 / 3 - 2);
+        let toolRect = new Path2D();
+        toolRect.rect(x + 1, (y * 100) / 3 + 1, 100 - 2, 100 / 3 - 2);
         context.fillText(
             key,
-            x * 100 + 1 + sCanvasWidth / 6,
+            x + 1 + sCanvasWidth / 6,
             (y * 100) / 3 + 1 + sCanvasWidth / 6
         );
         context.stroke(toolRect);
@@ -121,7 +136,7 @@ function initSCanvas() {
         context.fillStyle = "#000000";
         x = dict["x"];
         y = dict["y"];
-        sizeCirc = new Path2D();
+        let sizeCirc = new Path2D();
         sizeCirc.arc(
             (x * 100) / 3 + sCanvasWidth / 6,
             (y * 100) / 3 + sCanvasWidth / 6,
@@ -133,14 +148,12 @@ function initSCanvas() {
         dict["path"] = sizeCirc;
     }
     updateImgData(sCanvas, context, "selection");
-    document.createElement("aaaa");
 }
-initSCanvas();
 
 function beginDraw(event) {
     var { x, y } = getCursorPosition(dCanvas, event);
-    mouseDownPos["x"] = x - dCanvas.offsetLeft;
-    mouseDownPos["y"] = y - dCanvas.offsetTop;
+    mouseDownPos["x"] = x;
+    mouseDownPos["y"] = y;
     isDrawing = true;
 }
 
@@ -151,8 +164,8 @@ function endDraw(event) {
     paths.push({
         xStart: mouseDownPos["x"],
         yStart: mouseDownPos["y"],
-        xEnd: x - dCanvas.offsetLeft,
-        yEnd: y - dCanvas.offsetTop,
+        xEnd: x,
+        yEnd: y,
         color: drawColor,
         size: drawSize,
     });
@@ -167,25 +180,25 @@ function draw(event) {
     }
     switch (drawType) {
         case drawTypes.Pencil:
-            drawPencil(this, event);
+            drawPencil(event);
             break;
         case drawTypes.Line:
-            drawLine(this, event);
+            drawLine(event);
             break;
         default:
             break;
     }
 }
 
-function drawPencil(this_object, event) {}
+function drawPencil(event) {}
 
-function drawLine(this_object, event) {
-    context = this_object.getContext("2d");
+function drawLine(event) {
+    context = dCanvas.getContext("2d");
     context.putImageData(dImgData, 0, 0);
 
     var position = getCursorPosition(dCanvas, event);
-    x = position["x"] - this_object.offsetLeft;
-    y = position["y"] - this_object.offsetTop;
+    x = position["x"];
+    y = position["y"];
 
     context.beginPath();
     context.moveTo(mouseDownPos["x"], mouseDownPos["y"]);
@@ -197,9 +210,6 @@ function drawLine(this_object, event) {
 }
 
 function select(event) {
-    var { x, y } = getCursorPosition(this, event);
-    var xCoord = Math.floor(x / 100);
-    var yCoord = Math.floor(y / 100);
     var color = false;
     for (key in selectMappingColors) {
         if (
@@ -230,7 +240,8 @@ function select(event) {
             }
         }
     }
-    if (!tool) {
+    if (!color && !tool) {
+        var size = false;
         for (key in selectMappingSize) {
             if (
                 context.isPointInPath(
@@ -240,61 +251,29 @@ function select(event) {
                 )
             ) {
                 drawSize = selectMappingSize[key]["size"];
+                size = true;
                 break;
             }
         }
     }
 }
 
-var clearButton = document.getElementById("clearButton");
-clearButton.onclick = function() {
-    dCanvas.getContext("2d").clearRect(0, 0, dCanvas.width, dCanvas.height);
-    clicks = 0;
-    updateImgData(dCanvas, dCanvas.getContext("2d"), "draw");
-    paths = [];
-    console.log("clear");
-};
-var showOthersButton = document.getElementById("showOthersButton");
-showOthersButton.onclick = function() {
-    oCanvas.hidden = false;
-    console.log("showOthers");
-};
-var hideOthersButton = document.getElementById("hideOthersButton");
-hideOthersButton.onclick = function() {
-    oCanvas.hidden = true;
-    console.log("hideOthers");
-};
-var submitButton = document.getElementById("submitButton");
-// submitButton.onclick = function() {
-//     let xhr = new XMLHttpRequest();
-//     xhr.open("POST", location.protocol + "//localhost:8080/canvas/post");
-
-//     xhr.setRequestHeader("Accept", "application/json");
-//     xhr.setRequestHeader("Content-Type", "application/json");
-
-//     xhr.onload = () => console.log(xhr.responseText);
-
-//     let data = `{ "imgData": ${dImgData}, "data": ${dImgData.data}, "width": ${dImgData.width}, "height": ${dImgData.height} }`;
-
-//     xhr.send(data);
-//     console.log("submit");
-// };
-
 function resizeCanvases() {
-    dCanvas.width = Math.max(window.innerWidth - sCanvasWidth - 42, 1);
-    dCanvas.height = Math.max(window.innerHeight - 200 - 22, 1);
+    dCanvas.width = Math.max(window.innerWidth - sCanvasWidth - 112 - 2, 1);
+    dCanvas.height = Math.max(window.innerHeight - 160 - 2, 1);
     if (dImgData != null) {
         dCanvas.getContext("2d").putImageData(dImgData, 0, 0);
     }
 
-    oCanvas.width = Math.max(window.innerWidth - sCanvasWidth - 42, 1);
-    oCanvas.height = Math.max(window.innerHeight - 22, 1);
+    oCanvas.width = Math.max(window.innerWidth - sCanvasWidth - 112, 1);
+    oCanvas.height = Math.max(window.innerHeight - 160, 1);
     if (oImgData != null) {
         oCanvas.getContext("2d").putImageData(oImgData, 0, 0);
     }
 
     sCanvas.width = sCanvasWidth;
-    sCanvas.height = Math.max(window.innerHeight - 200 - 220, 1);
+    sCanvas.height = Math.max(window.innerHeight - 160 - 2, 1);
+    initSCanvas();
     if (sImgData != null) {
         sCanvas.getContext("2d").putImageData(sImgData, 0, 0);
     }
@@ -302,27 +281,34 @@ function resizeCanvases() {
 
 window.onload = window.onresize = resizeCanvases;
 
-var token, userId;
-// so we don't have to write this out everytime
-const twitch = window.Twitch.ext;
-
-// callback called when context of an extension is fired
-twitch.onContext((context) => {
-    console.log(context);
-});
-
 // onAuthorized callback called each time JWT is fired
 twitch.onAuthorized((auth) => {
-    // save our credentials
     token = auth.token;
     userId = auth.userId;
+    document.getElementById("submitButton").disabled = false;
 });
+
+clearButton.onclick = function() {
+    dCanvas.getContext("2d").clearRect(0, 0, dCanvas.width, dCanvas.height);
+    clicks = 0;
+    updateImgData(dCanvas, dCanvas.getContext("2d"), "draw");
+    paths = [];
+    console.log("clear");
+};
+showOthersButton.onclick = function() {
+    oCanvas.hidden = false;
+    console.log("showOthers");
+};
+hideOthersButton.onclick = function() {
+    oCanvas.hidden = true;
+    console.log("hideOthers");
+};
 
 $(function() {
     $("#submitButton").click(function(e) {
         $.ajax({
             type: "POST",
-            url: "https://5569-2a02-810b-4340-74a0-9dd2-3fea-a1b-8145.eu.ngrok.io/post_paths",
+            url: "https://" + backend_subdomain + ".eu.ngrok.io/post_paths",
             data: JSON.stringify({ paths: paths }),
             contentType: "application/json",
             headers: {
@@ -344,43 +330,14 @@ $(function() {
             }
         }
     });
-    // $("#showButton").click(function(e) {
-    //     $.ajax({
-    //         type: "GET",
-    //         url: "https://5569-2a02-810b-4340-74a0-9dd2-3fea-a1b-8145.eu.ngrok.io/get_paths",
-    //         contentType: "application/json",
-    //         success: function(data) {
-    //             console.log(data);
-    //             var context = oCanvas.getContext("2d");
-    //             for (key in data) {
-    //                 context.fillStyle = data[key]["color"];
-    //                 context.strokeStyle = data[key]["color"];
-    //                 context.lineWidth = data[key]["size"];
-    //                 context.beginPath();
-    //                 context.moveTo(data[key]["xStart"], data[key]["yStart"]);
-    //                 context.lineTo(data[key]["xEnd"], data[key]["yEnd"]);
-    //                 context.stroke();
-    //             }
-    //             updateImgData(oCanvas, context, "others");
-    //         },
-    //         headers: {
-    //             Authorization: "Bearer " + token,
-    //         },
-    //     });
-    // });
-    $("#hideOthersButton").click(function(e) {
-        oImgData = null;
-        oCanvas.getContext("2d").clearRect(0, 0, oCanvas.width, oCanvas.height);
-    });
 });
 
 var updateInterval = setInterval(function() {
     $.ajax({
         type: "GET",
-        url: "https://5569-2a02-810b-4340-74a0-9dd2-3fea-a1b-8145.eu.ngrok.io/get_paths",
+        url: "https://" + backend_subdomain + ".eu.ngrok.io/get_paths",
         contentType: "application/json",
         success: function(data) {
-            console.log(data);
             var context = oCanvas.getContext("2d");
             context.clearRect(0, 0, oCanvas.width, oCanvas.height);
             for (key in data) {
@@ -399,3 +356,9 @@ var updateInterval = setInterval(function() {
         },
     });
 }, 2000);
+
+initSCanvas();
+
+sCanvas.fillStyle("#000000");
+sCanvas.fillRect(30, 30, sCanvasWidth, sCanvasWidth);
+updateImgData(sCanvas, sCanvas.getContext("2d"), "selection");

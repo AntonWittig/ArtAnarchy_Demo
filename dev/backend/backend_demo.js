@@ -1,4 +1,4 @@
-// node backend_demo.js
+// ./services> node backend_demo.js
 // C:/Users/anton/ngrok http 3000
 
 /* Importing Libraries */
@@ -16,7 +16,8 @@ function verifyAndDecode(header) {
             const token = header.substring(bearerPrefix.length);
             return jsonwebtoken.verify(token, secret, { algorithms: ["HS256"] });
         } catch (e) {
-            return console.log("Invalid JWT");
+            console.log("Invalid JWT");
+            return false;
         }
     }
 }
@@ -41,7 +42,7 @@ app.use((req, res, next) => {
         "Access-Control-Allow-Headers",
         "Content-Type, Authorization, X-Requested-With"
     );
-    res.setHeader("Access-Control-Allow-Methods", "OPTIONS, GET, POST");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST");
     // Note that the origin of an extension iframe will be null
     // so the Access-Control-Allow-Origin has to be wildcard.
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -54,31 +55,32 @@ function simpleHash({ xStart, yStart, xEnd, yEnd }) {
     );
 }
 
-pathsDict = {
-    10102020: {
-        xStart: 10,
-        yStart: 10,
-        xEnd: 20,
-        yEnd: 20,
-        color: "#00ff00",
-        size: "2",
-    },
-};
+pathsDict = {};
 
 app.post("/post_paths", (req, res) => {
     const payload = verifyAndDecode(req.headers.authorization);
-    var paths = req.body["paths"];
-    for (var i in paths) {
-        var hash = simpleHash(paths[i]);
-        if (!(hash in pathsDict)) {
-            pathsDict[hash] = paths[i];
+    if (!payload) {
+        res.status(401).send("Invalid JWT");
+    } else {
+        var paths = req.body["paths"];
+        for (var i in paths) {
+            var hash = simpleHash(paths[i]);
+            if (!(hash in pathsDict)) {
+                pathsDict[hash] = paths[i];
+            }
         }
+        res.status(200);
+        res.send("Success");
     }
-    res.status(200);
-    res.send("Success");
 });
 app.get("/get_paths", (req, res) => {
     const payload = verifyAndDecode(req.headers.authorization);
-    console.log(pathsDict);
+    if (!payload) {
+        res.status(401).send("Invalid JWT");
+    } else {
+        res.send(pathsDict);
+    }
+});
+app.get("/get_paths_external", (req, res) => {
     res.send(pathsDict);
 });

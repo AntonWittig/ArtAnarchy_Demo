@@ -1,0 +1,29 @@
+#selectionCanvas {
+    position: absolute;
+    left: 0;
+    top: 5rem;
+}
+
+#otherCanvas {
+    position: absolute;
+    right: calc(7rem + 1px);
+    top: calc(5rem + 1px);
+}
+
+#drawingCanvas {
+    position: absolute;
+    right: 7rem;
+    top: 5rem;
+}
+
+#buttons {
+    position: absolute;
+    bottom: 5rem;
+    left: 0;
+    width: 100px;
+}
+
+#buttons .button {
+    margin-top: 5px;
+    width: 100px;
+}
