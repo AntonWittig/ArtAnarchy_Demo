@@ -1,58 +1,48 @@
-# Extensions-Hello-World
-The Simplest Extension in the (Hello) World.
+# ArtAnarchy_Demo
 
-## Motivation
-The Hello World sample is designed to get you started building a Twitch Extension quickly. It contains all the key parts of a functioning Extension and can be immediately run in the [Developer Rig](https://github.com/twitchdev/developer-rig).  For a fast guide to get started, visit the Developer Rig documentation.
+A demo extension for the bachelor topic of ArtAnarch
 
-## What's in the Sample
-The Hello World Extension provides a simple scenario that demonstrates the end-to-end flow of an Extension. On the frontend, a user clicks a button that can change the color of a circle. Instead of changing the CSS locally, it calls its Extension Backend Service (EBS) to update the color of the circle. That message is then sent via Twitch PubSub to update all clients listening to the PubSub topic.
+## Content
 
-__The sample is broken into two main components:__
+The main content in this repository is contained in the dev folder and is split into three parts:
 
-1. The Frontend of the Extension, comprised of HTML files for the different extension views and corresponding Javascript files and CSS. The frontend has the following functionality:
-    * A button and script that makes a POST call to the EBS to request a color change for the circle
-    * A GET call when the Extension is initialized to change the circle to the current color stored on the EBS
-    * A listener to Twitch PubSub, that receives color change updates and then updates the circle color
-2. A lightweight EBS that performs the following functionality:
-    * Spins up a simple HTTPS server with a POST handler for changing color
-    * Validates an Extension JWT
-    * Sends a new color message via Twitch PubSub for a specific channel
+1. The frontend, comprised of the HTML file for the video overlay view and its corresponding Javascript and CSS files. The following functionality is provided:
+   - Choosing color to draw by pressing on the colored squares
+   - Choosing draw style by pressing on the line "button" (TBD pencil & eraser)
+   - Choosing line width by pressing on the different sized circles
+   - Drawing on the canvas in the middle of the screen by clicking and dragging the mouse
+   - Clear the canvas by pressing the clear button
+   - Showing the submitted drawings of other users by pressing the show button (default)
+   - Hiding the drawings of other users by pressing the hide button
+   - Submitting your current drawing(/canvas) by pressing the submit button. This uses a POST request towards the backend to submit all drawn lines
+   - (The frontend also uses a GET request to fetch the current collection of submitted lines of all users)
+2. The backend, comprised of a single Javascript file constructing an Express JS server that acts as an API. The following functionality is provided:
+   - Storing line data submitted by a POST request to "/post_paths"
+   - Sending all stored line data as result of a received GET request. As the external viewer page cant be authorized it accesses the server through "/get_paths_external" while the frontend accesses the server through "/get_paths"
+3. The external viewer, comprised of a HTML and a Javascript file. There is no functionality provided by this viewer except that it also fetches the line data every 2 seconds and displays it on a blank website.
 
-## Using the Sample
-The recommended path to using this sample is with the [Developer Rig](https://github.com/twitchdev/developer-rig).  Use the Developer Rig's `extension-init` command to clone this repository.
+## Setting up and Usage
 
-The Developer Rig is able to host the frontend Hello World files, but the EBS must be run and hosted separately.
+### Twitch/Frontend
 
-### Setting Up Your Backend Certificates
-Twitch Extensions require SSL (TLS).
+When your twitch account has been invited to test this extension add it to your account and set it as one of your active video overlay extensions. At the moment only certain allowed users are able to use the extension as it is still a demo.
 
-If you're using the Developer Rig and used it to create this extension, it will have already configured the certificates.  Otherwise, you'll need to set up a certificate for local development.  This will generate a new certificate (`server.crt` and `server.key`) for you and place it in the `conf/` directory. This certificate is different from the one used for the Developer Rig.
+### Backend
 
-#### On MacOS
-Navigate to the root of the Hello World extension folder and run `npm install` and then `npm run cert`
+When you've activated the extension host your backend by navigating to the directory `/dev/backend/` and running the command:
 
-#### On Windows
-Run the following commands to generate the necessary certificates for your Hello World backend
-1. `node scripts/ssl.js`
-2. `mkdir ../my-extension/conf`
-3. `mv ssl/selfsigned.crt ../my-extension/conf/server.crt`
-4. `mv ssl/selfsigned.key ../my-extension/conf/server.key`
+    node backend_demo.js
 
-### Running Hello World
-If you're using the Developer Rig, it has buttons in its UI to perform the following actions.
+This will run the Express JS server locally. I recommend using the free software [ngrok](https://ngrok.com/) to make the locally hosted server accessible over the internet. To do this run the following command in the directory in which you stored the ngrok.exe file (alternatively additionally give the path to the file):
 
-To run the EBS, run `node services/backend`, with the following command line arguments: `-c <client id>`, `-s <secret>`, `-o <owner id>`.
+    ngrok http 3000
 
-This provides the EBS with your Extension client ID, Extension secret and the user ID of the Extension owner (likely you). These are necessary to validate calls to your EBS and make calls to Twitch services such as PubSub.
+If your local server is not hosted on port 3000 change the port to the port your server is hosted on.
 
-If you do not want to pass in command line arguments, you can also directly set the following environment variables: `EXT_SECRET`, `EXT_CLIENT_ID`, `EXT_OWNER_ID` in your code.
+### External Viewer
 
-You can get your client ID and secret from your [Extension Dashboard](https://dev.twitch.tv/dashboard/extensions).
+The external viewer can be opened simply by opening the HTML file in a browser of your choice (I do not guarantee the file to flawlessly work in every browser there is). If you want to include the file into your streaming software include the file in a browser as a source. Alternatively in case you use OBS for streaming you have the possibility to create a browser source containing the HTML file. If you run into while doing this you can host the HTML locally to access it through a weblink. To do this run the following command in the directory `/dev/external/`:
 
-To get the owner ID, you will need to execute a simple CURL command against the Twitch `/users` endpoint. You'll need your extension client ID as part of the query (this will be made consistent with the Developer Rig shortly, by using _owner name_).
+    npx httpserver
 
-```bash
-curl -H "Client-ID: <client id>" -X GET "https://api.twitch.tv/helix/users?login=<owner name>"
-```
-
-**Note -** If you haven't yet created an extension, you can start that process [here](https://dev.twitch.tv/extensions).
+Use the weblink `http://localhost:8080/external_viewer.html` in the browser source in OBS (change the port if you use a differnt port for hosting the server).
